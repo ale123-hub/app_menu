@@ -1,0 +1,5 @@
+{
+    "dart.enableSnippets": false,
+    "dart.enableServerSnippets": true,
+    "editor.snippets.codeActions.enabled": true
+}
