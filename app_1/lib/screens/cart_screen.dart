@@ -39,16 +39,32 @@ class _CartScreenState extends State<CartScreen> {
           actions: [
             TextButton(
               onPressed: () {
-                CartScreen.cartItems.clear();
-                Navigator.of(context).pop(); // Cierra el diálogo
-                Navigator.of(context).pop(); // Regresa a pantalla anterior
+                Navigator.of(context).pop(); // Cierra solo el diálogo
               },
-              child: const Text('Cerrar'),
+              child: const Text('Atrás'),
+            ),
+            TextButton(
+              onPressed: () {
+                CartScreen.cartItems.clear();
+
+                Navigator.of(context).pop(); // Cierra el diálogo
+
+                // Luego intenta cerrar la pantalla del carrito si es posible
+                if (mounted && Navigator.of(context).canPop()) {
+                  Navigator.of(context).pop();
+                }
+              },
+              child: const Text('Finalizar pedido'),
             ),
           ],
         );
       },
     );
+  }
+
+  void _cancelOrder() {
+    CartScreen.cartItems.clear();
+    Navigator.pop(context);
   }
 
   void _editProduct(BuildContext context, int index) {
@@ -60,7 +76,7 @@ class _CartScreenState extends State<CartScreen> {
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: Text('Editar Nombre del producto'),
+          title: const Text('Editar Nombre del producto'),
           content: TextField(
             controller: nameController,
             decoration: const InputDecoration(labelText: 'Nuevo nombre'),
@@ -73,7 +89,7 @@ class _CartScreenState extends State<CartScreen> {
             ElevatedButton(
               onPressed: () {
                 final newName = nameController.text.trim();
-                if (newName. isNotEmpty) {
+                if (newName.isNotEmpty) {
                   setState(() {
                     CartScreen.cartItems[index] = Product(
                       name: newName,
@@ -96,9 +112,12 @@ class _CartScreenState extends State<CartScreen> {
   @override
   Widget build(BuildContext context) {
     if (CartScreen.cartItems.isEmpty) {
-      return const Scaffold(
-        body: Center(
-          child: Text('No hay productos en el pedido'),
+      return Scaffold(
+        appBar: AppBar(
+          title: const Text('Tu orden es:'),
+        ),
+        body: const Center(
+          child: Text('No hay pedidos realizados'),
         ),
       );
     }
@@ -145,13 +164,22 @@ class _CartScreenState extends State<CartScreen> {
                 title: const Text('Total'),
                 trailing: Text('\$${total.toStringAsFixed(2)}'),
               ),
-              SizedBox(
-                width : double.infinity,
-                height: 50,
-                child: ElevatedButton(
-                  onPressed: _generateVoucher, 
-                  child: const Text ('Confirmar pedido'),
-                ), 
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: _cancelOrder,
+                      child: const Text('Cancelar'),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: _generateVoucher,
+                      child: const Text('Confirmar pedido'),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
