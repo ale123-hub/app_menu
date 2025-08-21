@@ -24,43 +24,56 @@ class _CartScreenState extends State<CartScreen> {
       builder: (context) {
         return AlertDialog(
           title: const Text('Comprobante de Pedido'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
+          content: SizedBox(
+          // Limitar la altura del dialogo para que no crezca demasiado
+          height: MediaQuery.of(context).size.height * 0.5,
+          width: double.maxFinite,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text('Turno: #$voucherNumber'),
-              ...CartScreen.cartItems.map((item) => ListTile(
-                    title: Text(item.name),
-                    trailing: Text('\$${item.price.toStringAsFixed(2)}'),
-                  )),
+              const SizedBox(height: 10),
+              Expanded(
+                // La lista crece y puede hacer scroll si es necesario
+                child: ListView.builder(
+                  shrinkWrap: true,
+                  itemCount: CartScreen.cartItems.length,
+                  itemBuilder: (context, index) {
+                    final item = CartScreen.cartItems[index];
+                    return ListTile(
+                      title: Text(item.name),
+                      trailing: Text('\$${item.price.toStringAsFixed(2)}'),
+                    );
+                  },
+                ),
+              ),
               const Divider(),
               Text('Total: \$${total.toStringAsFixed(2)}'),
             ],
           ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop(); // Cierra solo el diálogo
-              },
-              child: const Text('Atrás'),
-            ),
-            TextButton(
-              onPressed: () {
-                CartScreen.cartItems.clear();
-
-                Navigator.of(context).pop(); // Cierra el diálogo
-
-                // Luego intenta cerrar la pantalla del carrito si es posible
-                if (mounted && Navigator.of(context).canPop()) {
-                  Navigator.of(context).pop();
-                }
-              },
-              child: const Text('Finalizar pedido'),
-            ),
-          ],
-        );
-      },
-    );
-  }
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop(); // Cierra solo el diálogo
+            },
+            child: const Text('Atrás'),
+          ),
+          TextButton(
+            onPressed: () {
+              CartScreen.cartItems.clear();
+              Navigator.of(context).pop(); // Cierra el diálogo
+              if (mounted && Navigator.of(context).canPop()) {
+                Navigator.of(context).pop();
+              }
+            },
+            child: const Text('Finalizar pedido'),
+          ),
+        ],
+      );
+    },
+  );
+}
 
   void _cancelOrder() {
     CartScreen.cartItems.clear();
@@ -114,7 +127,7 @@ class _CartScreenState extends State<CartScreen> {
     if (CartScreen.cartItems.isEmpty) {
       return Scaffold(
         appBar: AppBar(
-          title: const Text('Tu orden es:'),
+          title: const Text('Tu Orden es:'),
         ),
         body: const Center(
           child: Text('No hay pedidos realizados'),
@@ -124,7 +137,7 @@ class _CartScreenState extends State<CartScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Tu Pedido'),
+        title: const Text('Tu Orden es:'),
       ),
       body: ListView.builder(
         itemCount: CartScreen.cartItems.length,
