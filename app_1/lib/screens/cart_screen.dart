@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:pdf/pdf.dart';
+import 'package:pdf/widgets.dart' as pw;
+import 'package:printing/printing.dart';
 import '../models/product.dart';
 
 class CartScreen extends StatefulWidget {
@@ -16,6 +19,50 @@ class _CartScreenState extends State<CartScreen> {
   double get total =>
       CartScreen.cartItems.fold(0, (sum, item) => sum + item.price);
 
+  // Genera e imprime el PDF con el pedido
+  Future<void> _printVoucher(int turno) async {
+    final pdf = pw.Document();
+
+    pdf.addPage(
+      pw.Page(
+        build: (pw.Context context) {
+          return pw.Column(
+            crossAxisAlignment: pw.CrossAxisAlignment.start,
+            children: [
+              pw.Text(
+                'Super Jugos Nachito',
+                style: pw.TextStyle(fontSize: 24, fontWeight: pw.FontWeight.bold),
+              ),
+              pw.SizedBox(height: 10),
+              pw.Text('Comprobante de Pedido'),
+              pw.Text('Turno: #$turno'),
+              pw.SizedBox(height: 10),
+              pw.Table.fromTextArray(
+                headers: ['Producto', 'Precio'],
+                data: CartScreen.cartItems
+                    .map((item) => [item.name, '\$${item.price.toStringAsFixed(2)}'])
+                    .toList(),
+              ),
+              pw.Divider(),
+              pw.Align(
+                alignment: pw.Alignment.centerRight,
+                child: pw.Text(
+                  'Total: \$${total.toStringAsFixed(2)}',
+                  style: pw.TextStyle(fontSize: 16),
+                ),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+
+    await Printing.layoutPdf(
+      onLayout: (PdfPageFormat format) async => pdf.save(),
+    );
+  }
+
+  // Muestra un diálogo con el resumen del pedido y opciones
   void _generateVoucher() {
     final voucherNumber = turno++;
 
@@ -25,61 +72,67 @@ class _CartScreenState extends State<CartScreen> {
         return AlertDialog(
           title: const Text('Comprobante de Pedido'),
           content: SizedBox(
-          // Limitar la altura del dialogo para que no crezca demasiado
-          height: MediaQuery.of(context).size.height * 0.5,
-          width: double.maxFinite,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('Turno: #$voucherNumber'),
-              const SizedBox(height: 10),
-              Expanded(
-                // La lista crece y puede hacer scroll si es necesario
-                child: ListView.builder(
-                  shrinkWrap: true,
-                  itemCount: CartScreen.cartItems.length,
-                  itemBuilder: (context, index) {
-                    final item = CartScreen.cartItems[index];
-                    return ListTile(
-                      title: Text(item.name),
-                      trailing: Text('\$${item.price.toStringAsFixed(2)}'),
-                    );
-                  },
+            height: MediaQuery.of(context).size.height * 0.5,
+            width: double.maxFinite,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Turno: #$voucherNumber'),
+                const SizedBox(height: 10),
+                Expanded(
+                  child: ListView.builder(
+                    shrinkWrap: true,
+                    itemCount: CartScreen.cartItems.length,
+                    itemBuilder: (context, index) {
+                      final item = CartScreen.cartItems[index];
+                      return ListTile(
+                        title: Text(item.name),
+                        trailing: Text('\$${item.price.toStringAsFixed(2)}'),
+                      );
+                    },
+                  ),
                 ),
-              ),
-              const Divider(),
-              Text('Total: \$${total.toStringAsFixed(2)}'),
-            ],
+                const Divider(),
+                Text('Total: \$${total.toStringAsFixed(2)}'),
+              ],
+            ),
           ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.of(context).pop(); // Cierra solo el diálogo
-            },
-            child: const Text('Atrás'),
-          ),
-          TextButton(
-            onPressed: () {
-              CartScreen.cartItems.clear();
-              Navigator.of(context).pop(); // Cierra el diálogo
-              if (mounted && Navigator.of(context).canPop()) {
+          actions: [
+            TextButton(
+              onPressed: () {
                 Navigator.of(context).pop();
-              }
-            },
-            child: const Text('Finalizar pedido'),
-          ),
-        ],
-      );
-    },
-  );
-}
+              },
+              child: const Text('Atrás'),
+            ),
+            TextButton(
+              onPressed: () async {
+                await _printVoucher(voucherNumber);
+              },
+              child: const Text('Imprimir'),
+            ),
+            TextButton(
+              onPressed: () {
+                CartScreen.cartItems.clear();
+                Navigator.of(context).pop(); // Cierra el diálogo
+                if (mounted && Navigator.of(context).canPop()) {
+                  Navigator.of(context).pop(); // Cierra la pantalla
+                }
+              },
+              child: const Text('Finalizar'),
+            ),
+          ],
+        );
+      },
+    );
+  }
 
+  // Cancela el pedido actual
   void _cancelOrder() {
     CartScreen.cartItems.clear();
     Navigator.pop(context);
   }
 
+  // Editar un producto del carrito
   void _editProduct(BuildContext context, int index) {
     final product = CartScreen.cartItems[index];
     final TextEditingController nameController =
@@ -122,6 +175,7 @@ class _CartScreenState extends State<CartScreen> {
     );
   }
 
+  // Vista principal del carrito
   @override
   Widget build(BuildContext context) {
     if (CartScreen.cartItems.isEmpty) {
@@ -143,7 +197,6 @@ class _CartScreenState extends State<CartScreen> {
         itemCount: CartScreen.cartItems.length,
         itemBuilder: (context, index) {
           final product = CartScreen.cartItems[index];
-
           return ListTile(
             title: Text(product.name),
             subtitle: Text('\$${product.price.toStringAsFixed(2)}'),
