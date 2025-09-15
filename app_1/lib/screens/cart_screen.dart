@@ -38,10 +38,14 @@ class _CartScreenState extends State<CartScreen> {
               pw.Text('Turno: #$turno'),
               pw.SizedBox(height: 10),
               pw.Table.fromTextArray(
-                headers: ['Producto', 'Precio'],
-                data: CartScreen.cartItems
-                    .map((item) => [item.name, '\$${item.price.toStringAsFixed(2)}'])
-                    .toList(),
+                headers: ['Producto', 'Nota', 'Precio'],
+                data: CartScreen.cartItems.map((item) {
+                  return [
+                    item.name,
+                    item.note ?? '-',
+                    '\$${item.price.toStringAsFixed(2)}'
+                  ];
+                }).toList(),
               ),
               pw.Divider(),
               pw.Align(
@@ -81,12 +85,12 @@ class _CartScreenState extends State<CartScreen> {
                 const SizedBox(height: 10),
                 Expanded(
                   child: ListView.builder(
-                    shrinkWrap: true,
                     itemCount: CartScreen.cartItems.length,
                     itemBuilder: (context, index) {
                       final item = CartScreen.cartItems[index];
                       return ListTile(
                         title: Text(item.name),
+                        subtitle: item.note != null ? Text('Nota: ${item.note}') : null,
                         trailing: Text('\$${item.price.toStringAsFixed(2)}'),
                       );
                     },
@@ -99,9 +103,7 @@ class _CartScreenState extends State<CartScreen> {
           ),
           actions: [
             TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
+              onPressed: () => Navigator.of(context).pop(),
               child: const Text('Atrás'),
             ),
             TextButton(
@@ -113,9 +115,9 @@ class _CartScreenState extends State<CartScreen> {
             TextButton(
               onPressed: () {
                 CartScreen.cartItems.clear();
-                Navigator.of(context).pop(); // Cierra el diálogo
+                Navigator.of(context).pop();
                 if (mounted && Navigator.of(context).canPop()) {
-                  Navigator.of(context).pop(); // Cierra la pantalla
+                  Navigator.of(context).pop();
                 }
               },
               child: const Text('Finalizar'),
@@ -132,20 +134,22 @@ class _CartScreenState extends State<CartScreen> {
     Navigator.pop(context);
   }
 
-  // Editar un producto del carrito
+  // Editar nota del producto
   void _editProduct(BuildContext context, int index) {
     final product = CartScreen.cartItems[index];
-    final TextEditingController nameController =
-        TextEditingController(text: product.name);
+    final TextEditingController noteController =
+        TextEditingController(text: product.note ?? '');
 
     showDialog(
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: const Text('Editar Nombre del producto'),
+          title: const Text('Agregar nota al producto'),
           content: TextField(
-            controller: nameController,
-            decoration: const InputDecoration(labelText: 'Nuevo nombre'),
+            controller: noteController,
+            decoration: const InputDecoration(
+              labelText: 'Ejem: Con jugo o con Café',
+            ),
           ),
           actions: [
             TextButton(
@@ -154,18 +158,17 @@ class _CartScreenState extends State<CartScreen> {
             ),
             ElevatedButton(
               onPressed: () {
-                final newName = nameController.text.trim();
-                if (newName.isNotEmpty) {
-                  setState(() {
-                    CartScreen.cartItems[index] = Product(
-                      name: newName,
-                      description: product.description,
-                      price: product.price,
-                      image: product.image,
-                    );
-                  });
-                  Navigator.of(context).pop();
-                }
+                final newNote = noteController.text.trim();
+                setState(() {
+                  CartScreen.cartItems[index] = Product(
+                    name: product.name,
+                    description: product.description,
+                    price: product.price,
+                    image: product.image,
+                    note: newNote.isNotEmpty ? newNote : null,
+                  );
+                });
+                Navigator.of(context).pop();
               },
               child: const Text('Guardar'),
             ),
@@ -199,7 +202,9 @@ class _CartScreenState extends State<CartScreen> {
           final product = CartScreen.cartItems[index];
           return ListTile(
             title: Text(product.name),
-            subtitle: Text('\$${product.price.toStringAsFixed(2)}'),
+            subtitle: product.note != null
+                ? Text('Nota: ${product.note}')
+                : null,
             trailing: Wrap(
               spacing: 10,
               children: [
