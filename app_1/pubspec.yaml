@@ -28,6 +28,7 @@ environment:
 # the latest version available on pub.dev. To see which dependencies have newer
 # versions available, run `flutter pub outdated`.
 dependencies:
+  firebase_auth: 6.1.0 #verificado
   flutter:
     sdk: flutter
 
@@ -38,8 +39,10 @@ dependencies:
   #paquetes prar generar e impmimir comprobante
   pdf: ^3.10.1
   printing: ^5.11.0
+  firebase_core: ^4.1.1
   
 dev_dependencies:
+
   flutter_test:
     sdk: flutter
 

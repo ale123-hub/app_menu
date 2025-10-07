@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart'; // logout
 import '../models/product.dart';
 import 'cart_screen.dart';
 
-// Esta lista queda aquí y será usada internamente
+// Lista de productos
 final List<Product> products = [
   Product(
     name: 'Tortilla de Verde',
@@ -27,17 +28,20 @@ final List<Product> products = [
     description: 'Pollo cocido acompañado de arroz, ensalada y jugo.',
     price: 2.00,
     image: null,
-  ),Product(
+  ),
+  Product(
     name: 'Seco de Carne',
     description: 'Costilla cocida a presion, acompañado de arroz, ensalada y jugo.',
     price: 2.00,
     image: null,
-  ),Product(
+  ),
+  Product(
     name: 'Salchipapa',
     description: 'Papas fritas y salchicha "ensalada al gusto".',
     price: 1.00,
     image: null,
-  ),Product(
+  ),
+  Product(
     name: 'Papa Carne',
     description: 'Papa frita con carne molida frita "ensalada al gusto".',
     price: 1.50,
@@ -46,7 +50,7 @@ final List<Product> products = [
 ];
 
 class CatalogScreen extends StatelessWidget {
-  const CatalogScreen({super.key}); // Quitamos el parámetro products
+  const CatalogScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -54,6 +58,7 @@ class CatalogScreen extends StatelessWidget {
       appBar: AppBar(
         title: const Text('Menú de los Super Jugos Nachito'),
         actions: [
+          // 🛒 Botón del carrito
           IconButton(
             icon: const Icon(Icons.shopping_cart),
             onPressed: () {
@@ -62,7 +67,15 @@ class CatalogScreen extends StatelessWidget {
                 MaterialPageRoute(builder: (context) => const CartScreen()),
               );
             },
-          )
+          ),
+          // 🔓 Botón de cerrar sesión
+          IconButton(
+            icon: const Icon(Icons.logout),
+            onPressed: () async {
+              await FirebaseAuth.instance.signOut();
+              // Redirige automáticamente al login gracias al StreamBuilder en main.dart
+            },
+          ),
         ],
       ),
       body: ListView.builder(
