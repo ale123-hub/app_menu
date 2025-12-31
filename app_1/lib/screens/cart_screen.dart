@@ -37,7 +37,7 @@ class _CartScreenState extends State<CartScreen> {
               pw.Text('Comprobante de Pedido'),
               pw.Text('Turno: #$turno'),
               pw.SizedBox(height: 10),
-              pw.Table.fromTextArray(
+              pw.TableHelper.fromTextArray(
                 headers: ['Producto', 'Nota', 'Precio'],
                 data: CartScreen.cartItems.map((item) {
                   return [
